@@ -1,4 +1,4 @@
-# L4SBOA: TeleHealth Over L4S
+# L4SBOA: TeleHealth Over L4S.
 
 **L4SBOA** (pronounced [Lisboa](https://pt.wikipedia.org/wiki/Lisboa)) is an L4S-based experimental network framework. We use L4SBOA as a prototype for network optimization developments in practice for various telehealth applications – sending DICOM images for diagnostics (high volume of data but tolerance for high latency), telemonitoring via wearable devices (low volume of data but demand for low latency), televisits (a video call through apps such as Zoom – high volume of data and demand for high latency). As a result of this project, we will understand whether we need any optimizations for L4S to use for telehealth applications and potential alternative approaches. 
 

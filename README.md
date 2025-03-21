@@ -30,9 +30,9 @@ Ensure you have the following installed on your system:
 1. **Clone the repository (if not already cloned):**
    ```sh
    git clone https://github.com/your-repo/L4SBOA.git
-   cd L4SBOA
    ```
-
+   ```sh
+   cd L4SBOA
    ```
 
 2. **Install dependencies:**

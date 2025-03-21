@@ -15,4 +15,4 @@ Alaska is the largest state in the United States of America and is said to be la
 This work aimed to investigate the claims of L4S in the first instance and eventually the improvements it brings to telehealth deployments. The telehalth component of this work is in three phases; tele health consultations, DICOM imaging and wearable devices. For Google Summer Of Code 2024, we were able to satisfactorily evaluate the first phase which is the tele health consulatation component of the research.
 
 
-To set up the L4S Kernel server locally, follow the instructions in [L4SKernelPatchSetUp.md](L4SKernelPatchSetUp.md).
+To set up the L4S Kernel server locally, follow the instructions in [L4SKernelPatchSetUp.md](./L4SkernelPatchSetUp.md).

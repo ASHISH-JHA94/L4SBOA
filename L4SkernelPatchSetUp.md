@@ -139,11 +139,12 @@ Again you need to check your localhost from ifconfig -a.
 
  The correct method is:
 
-- **On the Server Machine** (`172.21.4.251`):
+- **On the Server Machine**  eg.(`172.21.4.251`):
   ```bash
   iperf3 -s
   ```
 - **On the Client Machine**:
+eg:
   ```bash
   iperf3 -c 172.21.4.251 -p 5201
   ```
@@ -242,6 +243,19 @@ If you prefer to compile the kernel instead of using the pre-built package:
 - For debugging network issues, use:
   ```bash
   dmesg | grep -i dualpi2
+
   ```
+
+
+### **Additional Notes**
+- **Testing in a Controlled Environment**: Test the L4S setup in a controlled network environment to isolate variables and measure performance accurately.
+- **Telehealth Applications**: For telehealth use cases (e.g., DICOM imaging, telemonitoring, and televisits), ensure the network is optimized for both high-throughput and low-latency traffic.
+- **Documentation**: Refer to the [L4STeam/linux repository documentation](https://github.com/L4STeam/linux) for any additional setup instructions or troubleshooting.
+
+---
+
+This setup should allow you to experiment with L4S on a Linux system.
+
+  
 
 

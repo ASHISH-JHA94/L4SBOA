@@ -13,3 +13,6 @@ Congestion Control has been of enormous interest to computing since the 80s when
 Alaska is the largest state in the United States of America and is said to be larger than 179 recognised countries. Aside it's huge land mass, its has one of the smallest population in the United States of America. This points to low population density and multiple remote areas needing basic amenities like healthcare. Thanks to the internet, telemedicine is an avenue remote areas can be served with healthcare. The biggest impedements to telehealth in remote areas are loss, throughput and latency.
 
 This work aimed to investigate the claims of L4S in the first instance and eventually the improvements it brings to telehealth deployments. The telehalth component of this work is in three phases; tele health consultations, DICOM imaging and wearable devices. For Google Summer Of Code 2024, we were able to satisfactorily evaluate the first phase which is the tele health consulatation component of the research.
+
+
+To set up the L4S Kernel server locally, follow the instructions in [L4SKernelPatchSetUp.md](L4SKernelPatchSetUp.md).

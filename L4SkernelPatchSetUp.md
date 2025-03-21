@@ -1,185 +1,251 @@
- **step-by-step guide** to set up and configure the L4S-enabled Linux kernel for our experiments, including the necessary patches and configurations.
+
+
+# **Step-by-Step Guide to Setting Up an L4S-Enabled Linux Kernel for Experiments**
+
+## **Step 1: Prerequisites**
+Before you begin, ensure you have the following:
+
+### **1.1 System Requirements**
+- **Operating System**: Ubuntu/Debian or another Debian-based distribution is recommended.
+- **Kernel Build Tools**: Install essential dependencies:
+  ```bash
+  sudo apt update
+  sudo apt install build-essential libncurses-dev bison flex libssl-dev libelf-dev git wget unzip
+  ```
+- **Enough Disk Space**: Ensure at least **20GB of free disk space** for compiling the kernel.
+- **Stable Internet Connection**: Required to download the kernel source and dependencies.
+
+### **1.2 Identify Your Network Interface Name**
+Newer Linux distributions use **Predictable Network Interface Names** instead of `eth0`. To find your correct interface name, run:
+```bash
+ip link show
+```
+Look for an interface like `eno1`, `ens33`, or `eth0`. Use this correct name in later steps.
 
 ---
 
-### **Step 1: Prerequisites**
-Before proceeding, ensure you have the following:
-1. **A Linux system**: Ubuntu, Debian, or any Debian-based distribution is recommended.
-2. **Build tools**: Install the necessary tools to compile the Linux kernel.
-   ```bash
-   sudo apt update
-   sudo apt install build-essential libncurses-dev bison flex libssl-dev libelf-dev git wget unzip
-   ```
-3. **Enough disk space**: Kernel compilation requires significant disk space (at least 20 GB free).
-4. **Stable internet connection**: For downloading the kernel source and dependencies.
+## **Step 2: Install the Pre-Built L4S Kernel**
+Instead of compiling the kernel manually, you can install a **pre-built** kernel.
 
----
-
-### **Step 2: Download and Install the Pre-Built Kernel**
-The repository provides pre-built Debian packages for easier installation. Follow these steps:
-
-1. **Download the pre-built kernel**:
+1. **Download the Pre-Built Kernel Packages**
    ```bash
    wget https://github.com/L4STeam/linux/releases/download/testing-build/l4s-testing.zip
    ```
-
-2. **Unzip the archive**:
+2. **Extract the Kernel Package**
    ```bash
    unzip l4s-testing.zip
    ```
-
-3. **Install the kernel packages**:
+3. **Install the Kernel**
    ```bash
    sudo dpkg --install debian_build/*
    ```
-
-4. **Update GRUB**:
+4. **Update GRUB Bootloader**
    ```bash
    sudo update-grub
    ```
-
-5. **Reboot into the new kernel**:
+5. **Reboot into the New Kernel**
    ```bash
    sudo reboot
    ```
-
-6. **Verify the kernel version**:
-   After rebooting, check the kernel version to ensure the new kernel is in use:
+6. **Verify the Installed Kernel**
+   After rebooting, ensure you are running the new L4S kernel:
    ```bash
    uname -r
    ```
 
 ---
 
-### **Step 3: Load Required Kernel Modules**
-Load the necessary modules for L4S (e.g., `sch_dualpi2` and `tcp_prague`):
+## **Step 3: Load Required Kernel Modules**
+L4S requires specific kernel modules. Load them manually:
+
 ```bash
 sudo modprobe sch_dualpi2
 sudo modprobe tcp_prague
 ```
 
----
-
-### **Step 4: Configure Networking for L4S**
-1. **Enable ECN**:
-   ```bash
-   sudo sysctl -w net.ipv4.tcp_ecn=3
-   ```
-
-2. **Set TCP Congestion Control to Prague**:
-   ```bash
-   sudo sysctl -w net.ipv4.tcp_congestion_control=prague
-   ```
-
-3. **Configure DualPI2 AQM**:
-   Apply the DualPI2 queueing discipline to your network interface (e.g., `eth0`):
-   ```bash
-   sudo tc qdisc replace dev eth0 root dualpi2
-   ```
-
-4. **Disable Offloading Features**:
-   To avoid bursts and ensure proper pacing, disable offloading features on your network interface:
-   ```bash
-   sudo ethtool -K eth0 tso off gso off gro off lro off
-   ```
-
-5. **Configure FQ (Fair Queueing)**:
-   Replace the default queueing discipline with FQ for better pacing:
-   ```bash
-   sudo tc qdisc replace dev eth0 root handle 1: fq limit 20480 flow_limit 10240
-   ```
+To **verify if the modules are loaded**, run:
+```bash
+lsmod | grep -E "sch_dualpi2|tcp_prague"
+```
 
 ---
 
-### **Step 5: Verify the Configuration**
-1. **Check the congestion control algorithm**:
+## **Step 4: Configure Networking for L4S**
+### **4.1 Enable ECN**
+Enable Explicit Congestion Notification (ECN):
+```bash
+sudo sysctl -w net.ipv4.tcp_ecn=3
+```
+
+### **4.2 Set TCP Congestion Control to Prague**
+```bash
+sudo sysctl -w net.ipv4.tcp_congestion_control=prague
+```
+To confirm, check:
+```bash
+sysctl net.ipv4.tcp_congestion_control
+```
+
+### **4.3 Apply DualPI2 AQM to Your Network Interface**
+**Important:** Replace `eth0` with the correct interface (`eno1`, `ens33`, etc.).
+```bash
+sudo tc qdisc replace dev eno1 root dualpi2
+```
+
+### **4.4 Disable Offloading Features**
+**Issue Fixed**: Earlier, `ethtool` was missing. Install it before running:
+```bash
+sudo apt install ethtool -y
+```
+Then disable offloading to prevent network bursts:
+```bash
+sudo ethtool -K eno1 tso off gso off gro off lro off
+```
+
+### **4.5 Enable Fair Queueing (FQ)**
+```bash
+sudo tc qdisc replace dev eno1 root handle 1: fq limit 20480 flow_limit 10240
+```
+
+---
+
+## **Step 5: Verify Configuration**
+Run the following checks:
+
+1. **Verify Congestion Control**  
    ```bash
    sysctl net.ipv4.tcp_congestion_control
    ```
-
-2. **Check the queueing discipline**:
+2. **Check Queueing Discipline**  
    ```bash
-   tc qdisc show dev eth0
+   tc qdisc show dev eno1
    ```
-
-3. **Check ECN settings**:
+3. **Confirm ECN Settings**  
    ```bash
    sysctl net.ipv4.tcp_ecn
    ```
 
 ---
 
-### **Step 6: Perform Experiments**
-1. **Test with `iperf3`**:
-   - Install `iperf3`:
-     ```bash
-     sudo apt install iperf3
-     ```
-   - Run a server on one machine:
-     ```bash
-     iperf3 -s
-     ```
-   - Run a client on another machine:
-     ```bash
-     iperf3 -c <server-ip>
-     ```
+## **Step 6: Perform Network Performance Experiments**
+### **6.1 Install `iperf3`**
+```bash
+sudo apt install iperf3 -y
+```
 
-2. **Monitor Network Performance**:
-   - Use tools like `ping`, `ss`, and `tcpdump` to monitor latency, throughput, and packet loss.
+### **6.2 Run an `iperf3` Test**
+Earlier, I tried running `iperf3` with an **incorrect server address format (`http://172.21.4.251:5201`)**.
+Again you need to check your localhost from ifconfig -a.
 
----
+ The correct method is:
 
-### **Step 7: Persistent Configuration**
-To ensure the settings persist across reboots:
-1. Add the `sysctl` settings to `/etc/sysctl.conf`:
-   ```bash
-   echo "net.ipv4.tcp_ecn=3" | sudo tee -a /etc/sysctl.conf
-   echo "net.ipv4.tcp_congestion_control=prague" | sudo tee -a /etc/sysctl.conf
-   ```
-
-2. Add the `tc qdisc` configuration to a startup script (e.g., `/etc/rc.local`):
-   ```bash
-   sudo tc qdisc replace dev eth0 root dualpi2
-   ```
-
-3. Add the `ethtool` commands to a startup script:
-   ```bash
-   sudo ethtool -K eth0 tso off gso off gro off lro off
-   ```
+- **On the Server Machine**  eg.(`172.21.4.251`):
+  ```bash
+  iperf3 -s
+  ```
+- **On the Client Machine**:
+eg:
+  ```bash
+  iperf3 -c 172.21.4.251 -p 5201
+  ```
+- **For Reverse Mode Testing** (Useful for NAT/firewall issues):
+  ```bash
+  iperf3 -c 172.21.4.251 -p 5201 -R
+  ```
 
 ---
 
-### **Step 8: Compile the Kernel from Source (Optional)**
-If you prefer to compile the kernel from source instead of using the pre-built packages, follow these steps:
+## **Step 7: Make Configuration Persistent**
+To ensure settings persist after reboot:
 
-1. **Clone the L4S kernel repository**:
+### **7.1 Persist ECN & Prague TCP in `/etc/sysctl.conf`**
+```bash
+echo "net.ipv4.tcp_ecn=3" | sudo tee -a /etc/sysctl.conf
+echo "net.ipv4.tcp_congestion_control=prague" | sudo tee -a /etc/sysctl.conf
+```
+
+### **7.2 Persist `tc qdisc` Setup**
+Create a startup script `/etc/network/if-up.d/l4s_qdisc`:
+```bash
+sudo nano /etc/network/if-up.d/l4s_qdisc
+```
+Add:
+```bash
+#!/bin/sh
+tc qdisc replace dev eno1 root dualpi2
+```
+Save and make it executable:
+```bash
+sudo chmod +x /etc/network/if-up.d/l4s_qdisc
+```
+
+### **7.3 Persist `ethtool` Settings**
+Append to `/etc/rc.local`:
+```bash
+sudo nano /etc/rc.local
+```
+Add:
+```bash
+#!/bin/sh -e
+ethtool -K eno1 tso off gso off gro off lro off
+exit 0
+```
+Make it executable:
+```bash
+sudo chmod +x /etc/rc.local
+```
+
+---
+
+## **Step 8: Compile the Kernel from Source (Optional)**
+If you prefer to compile the kernel instead of using the pre-built package:
+
+1. **Clone the L4S Kernel Repository**
    ```bash
    git clone https://github.com/L4STeam/linux
    cd linux
    ```
-
-2. **Configure the kernel**:
+2. **Configure the Kernel**
    ```bash
    cp /boot/config-$(uname -r) .config
    make olddefconfig
    scripts/config -m TCP_CONG_PRAGUE
    scripts/config -m NET_SCH_DUALPI2
    ```
-
-3. **Compile and install the kernel**:
+3. **Compile & Install the Kernel**
    ```bash
    make -j$(nproc) LOCALVERSION=-prague-1
    sudo make modules_install
    sudo make install
    sudo update-grub
    ```
-
-4. **Reboot into the new kernel**:
+4. **Reboot into the New Kernel**
    ```bash
    sudo reboot
    ```
 
 ---
+
+## **Final Notes & Troubleshooting**
+- If your interface (`eno1`) isn't recognized, run:
+  ```bash
+  ip link show
+  ```
+- If `iperf3` fails to connect:
+  - Check if the server is running:
+    ```bash
+    sudo netstat -tulnp | grep 5201
+    ```
+  - Ensure port `5201` is open:
+    ```bash
+    sudo ufw allow 5201/tcp
+    ```
+- For debugging network issues, use:
+  ```bash
+  dmesg | grep -i dualpi2
+
+  ```
+
 
 ### **Additional Notes**
 - **Testing in a Controlled Environment**: Test the L4S setup in a controlled network environment to isolate variables and measure performance accurately.
@@ -189,3 +255,7 @@ If you prefer to compile the kernel from source instead of using the pre-built p
 ---
 
 This setup should allow you to experiment with L4S on a Linux system.
+
+  
+
+

@@ -12,34 +12,6 @@ Alaska is the largest state in the United States of America and is said to be la
 
 This work aimed to investigate the claims of L4S in the first instance and, eventually, the improvements it brings to telehealth deployments. The telehealth component of this work is in three phases: telehealth consultations, DICOM imaging, and wearable devices. For Google Summer Of Code 2024, we were able to satisfactorily evaluate the first phase, which is the telehealth consultation component of the research.
 
+For GSoc 2025, we would be extending the current frontend and creating a script that automates the test on L4S nodes against DICOM endpoint in comparision with the regular internet. A good starting point will be installing the L4S nodes on your machine from the repo https://github.com/L4STeam/linux and then running the tests. The technology is relatively novel so your ideas on testing and implementation will be welcomed. For the application, we are looking at your approach for testing and comparing the effectiveness of L4S on telemedicine workload so after installing the node.
 
-# L4SBOA Frontend Setup
 
-## Setting Up the React Frontend
-
-To run the React frontend locally, follow these steps:
-
-### Prerequisites
-Ensure you have the following installed on your system:
-- [Node.js](https://nodejs.org/) (Recommended version: 16 or later)
-- npm (Comes with Node.js)
-
-### Installation Steps
-1. **Clone the repository (if not already cloned):**
-   ```sh
-   git clone https://github.com/your-repo/L4SBOA.git
-   ```
-   ```sh
-   cd L4SBOA
-   ```
-
-2. **Install dependencies:**
-   ```sh
-   npm install or npm i
-   ```
-
-4. **Start the development server:**
-   ```sh
-   npm start
-   ```
-To set up the L4S Kernel server locally, follow the instructions in [L4SKernelPatchSetUp.md](./L4SkernelPatchSetUp.md).

@@ -197,6 +197,71 @@ sudo chmod +x /etc/rc.local
 
 ---
 
+
+## **Step 8: Comprehensive L4S Verification Checklist**  
+*Use this checklist to validate your L4S setup before experiments.*
+
+### **1. Kernel Verification**
+```bash
+uname -r
+```
+✅ **Expected**: Kernel version contains `l4s` (e.g., `5.15.0-l4s+`).
+
+### **2. Module Verification**
+```bash
+lsmod | grep -E "sch_dualpi2|tcp_prague"
+```
+✅ **Expected Output**:
+```
+tcp_prague             16384  0  
+sch_dualpi2            16384  0
+```
+
+### **3. Network Stack Verification**
+```bash
+sysctl net.ipv4.tcp_ecn net.ipv4.tcp_congestion_control
+```
+✅ **Expected**:
+```
+net.ipv4.tcp_ecn = 3  
+net.ipv4.tcp_congestion_control = prague
+```
+
+### **4. Queue Discipline Verification**
+```bash
+tc qdisc show dev eno1  # Replace with your interface
+```
+✅ **Expected**:  
+`qdisc dualpi2 root refcnt 2 limit 1000p target 5ms ce_threshold 1ms`
+
+### **5. Offload Verification**
+```bash
+ethtool -k eno1 | grep -E 'tso|gso|gro|lro'  # Replace interface
+```
+✅ **Expected**:
+```
+tcp-segmentation-offload: off  
+generic-segmentation-offload: off  
+generic-receive-offload: off  
+large-receive-offload: off [fixed]
+```
+
+### **6. Functional Test**
+**Server**:
+```bash
+iperf3 -s -p 5201
+```
+**Client**:
+```bash
+iperf3 -c [server_ip] -p 5201 -t 20 -Z
+```
+✅ **Success Criteria**:  
+- Stable throughput with no errors.  
+- Verify ECN negotiation:  
+  ```bash
+  ss -tin | grep ecn  # Should show "ecn" in output
+  ```
+  
 ## **Step 8: Compile the Kernel from Source (Optional)**
 If you prefer to compile the kernel instead of using the pre-built package:
 
@@ -246,6 +311,14 @@ If you prefer to compile the kernel instead of using the pre-built package:
 
   ```
 
+  | Symptom               | Checklist Step | Solution |  
+|------------------------|----------------|----------|  
+| `tcp_prague` not available | Step 8.2 | Load module: `sudo modprobe tcp_prague` |  
+| ECN not enabled         | Step 8.3 | Set `net.ipv4.tcp_ecn=3` |  
+| DualPI2 qdisc missing   | Step 8.4 | Reapply: `sudo tc qdisc replace dev eno1 root dualpi2` |  
+
+---
+
 
 ### **Additional Notes**
 - **Testing in a Controlled Environment**: Test the L4S setup in a controlled network environment to isolate variables and measure performance accurately.
@@ -255,6 +328,125 @@ If you prefer to compile the kernel instead of using the pre-built package:
 ---
 
 This setup should allow you to experiment with L4S on a Linux system.
+
+
+## **New: Connecting Two L4S-Configured Machines on Same Subnet**
+
+### **Prerequisites for Two-Machine Setup**
+1. Two machines with L4S kernel installed (follow Steps 1-5 above on both)
+2. Connected via Ethernet or on same network subnet
+3. IP addresses assigned (e.g., 192.168.1.10 and 192.168.1.20)
+
+### **Step A: Verify Network Connectivity**
+On both machines:
+```bash
+ip addr show
+ping <other-machine-ip>  # e.g., ping 192.168.1.20
+```
+
+### **Step B: Configure iperf3 Server and Client**
+**On Server Machine (192.168.1.10):**
+```bash
+iperf3 -s
+```
+
+**On Client Machine (192.168.1.20):**
+```bash
+iperf3 -c 192.168.1.10 -t 60 -i 5
+```
+
+### **Expected Output Examples**
+
+**1. Successful Connection:**
+```
+Connecting to host 192.168.1.10, port 5201
+[  5] local 192.168.1.20 port 12345 connected to 192.168.1.10 port 5201
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-5.00   sec  1.25 GBytes  2.15 Gbits/sec    0
+[  5]   5.00-10.00  sec  1.30 GBytes  2.23 Gbits/sec    0
+...
+```
+
+**2. With L4S Latency Measurements:**
+Add `-Z` flag for Prague congestion control:
+```bash
+iperf3 -c 192.168.1.10 -Z -t 30
+```
+Expected:
+```
+[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+[  5]   0.00-1.00   sec   156 MBytes  1.31 Gbits/sec    0    350 KBytes
+[  5]   1.00-2.00   sec   158 MBytes  1.33 Gbits/sec    0    420 KBytes
+...
+```
+
+### **Verifying L4S Functionality**
+1. Check ECN negotiation:
+```bash
+ss -tin
+```
+Look for `ecn` in output:
+```
+... ecn,cwr ...
+```
+
+2. Monitor DualPI2 queue:
+```bash
+tc -s qdisc show dev eno1
+```
+Expected:
+```
+qdisc dualpi2 ... 
+ Sent 1250000 bytes 1000 pkt (dropped 0, overlimits 0)
+```
+
+---
+
+## **Enhanced Troubleshooting for Two-Machine Setup**
+
+### **Common Issues and Solutions**
+
+1. **"Connection Refused" Error**
+   - Verify server is running: `ss -tulnp | grep 5201`
+   - Check firewall: `sudo ufw allow 5201/tcp`
+
+2. **Subnet Mismatch**
+   ```bash
+   ip route show
+   ```
+   Ensure both machines show same network (e.g., `192.168.1.0/24`)
+
+3. **ECN Not Negotiating**
+   - Confirm on both machines:
+   ```bash
+   sysctl net.ipv4.tcp_ecn  # Should return 3
+   ```
+
+---
+
+## **Performance Comparison Tests**
+
+### **L4S vs Traditional TCP Test**
+1. On Server:
+```bash
+iperf3 -s
+```
+
+2. On Client (Traditional TCP):
+```bash
+iperf3 -c 192.168.1.10 -C cubic
+```
+
+3. On Client (L4S):
+```bash
+iperf3 -c 192.168.1.10 -Z
+```
+
+**Expected Difference:**
+- L4S should show lower latency under congestion
+- Similar throughput but fewer retransmits
+
+
 
   
 

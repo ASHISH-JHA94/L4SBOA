@@ -261,8 +261,8 @@ iperf3 -c [server_ip] -p 5201 -t 20 -Z
   ```bash
   ss -tin | grep ecn  # Should show "ecn" in output
   ```
-  
-## **Step 8: Compile the Kernel from Source (Optional)**
+
+## **Step 9: Compile the Kernel from Source (Optional)**
 If you prefer to compile the kernel instead of using the pre-built package:
 
 1. **Clone the L4S Kernel Repository**

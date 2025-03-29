@@ -446,7 +446,7 @@ iperf3 -c 192.168.1.10 -Z
 - L4S should show lower latency under congestion
 - Similar throughput but fewer retransmits
 
-![alt text](image.png)
+![alt text](./testImages/image.png)
 
 To perform DICOM files transfer test on L4S configurable server and client, refer to [DicomTransferTest.md](./DicomTransferTest.md)
 

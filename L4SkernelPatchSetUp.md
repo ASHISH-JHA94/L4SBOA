@@ -436,7 +436,11 @@ If you prefer to compile the kernel instead of using the pre-built package:
 ### **Additional Notes**
 - **Testing in a Controlled Environment**: Test the L4S setup in a controlled network environment to isolate variables and measure performance accurately.
 - **Telehealth Applications**: For telehealth use cases (e.g., DICOM imaging, telemonitoring, and televisits), ensure the network is optimized for both high-throughput and low-latency traffic.
-- **Documentation**: Refer to the [L4STeam/linux repository documentation](https://github.com/L4STeam/linux) for any additional setup instructions or troubleshooting.
+- **Documentation**:
+1. L4S Team GitHub Repository: https://github.com/L4STeam/linux
+2. RFC 9330 - L4S Architecture: https://datatracker.ietf.org/doc/rfc9330/
+3. Prague Congestion Control Algorithm: https://datatracker.ietf.org/doc/draft-ietf-tcpm-prague-congestion-control/
+4. DualPI2 AQM Algorithm: https://datatracker.ietf.org/doc/draft-ietf-tsvwg-aqm-dualq-coupled/
 
 ---
 

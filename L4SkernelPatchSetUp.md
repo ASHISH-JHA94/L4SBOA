@@ -1,5 +1,3 @@
-
-
 # **Step-by-Step Guide to Setting Up an L4S-Enabled Linux Kernel for Experiments**
 
 ## **Step 1: Prerequisites**
@@ -127,13 +125,55 @@ Run the following checks:
 
 ---
 
-## **Step 6: Perform Network Performance Experiments**
-### **6.1 Install `iperf3`**
+## **Step 6: Make Configuration Persistent**
+To ensure settings persist after reboot:
+
+### **6.1 Persist ECN & Prague TCP in `/etc/sysctl.conf`**
+```bash
+echo "net.ipv4.tcp_ecn=3" | sudo tee -a /etc/sysctl.conf
+echo "net.ipv4.tcp_congestion_control=prague" | sudo tee -a /etc/sysctl.conf
+```
+
+### **6.2 Persist `tc qdisc` Setup**
+Create a startup script `/etc/network/if-up.d/l4s_qdisc`:
+```bash
+sudo nano /etc/network/if-up.d/l4s_qdisc
+```
+Add:
+```bash
+#!/bin/sh
+tc qdisc replace dev eno1 root dualpi2
+```
+Save and make it executable:
+```bash
+sudo chmod +x /etc/network/if-up.d/l4s_qdisc
+```
+
+### **6.3 Persist `ethtool` Settings**
+Append to `/etc/rc.local`:
+```bash
+sudo nano /etc/rc.local
+```
+Add:
+```bash
+#!/bin/sh -e
+ethtool -K eno1 tso off gso off gro off lro off
+exit 0
+```
+Make it executable:
+```bash
+sudo chmod +x /etc/rc.local
+```
+
+---
+
+## **Step 7: Perform Network Performance Experiments**
+### **7.1 Install `iperf3`**
 ```bash
 sudo apt install iperf3 -y
 ```
 
-### **6.2 Run an `iperf3` Test**
+### **7.2 Run an `iperf3` Test**
 Earlier, I tried running `iperf3` with an **incorrect server address format (`http://172.21.4.251:5201`)**.
 Again you need to check your localhost from ifconfig -a.
 
@@ -155,50 +195,125 @@ eg:
 
 ---
 
-## **Step 7: Make Configuration Persistent**
-To ensure settings persist after reboot:
+## **Step 8: Comprehensive TCP Prague Testing**
 
-### **7.1 Persist ECN & Prague TCP in `/etc/sysctl.conf`**
-```bash
-echo "net.ipv4.tcp_ecn=3" | sudo tee -a /etc/sysctl.conf
-echo "net.ipv4.tcp_congestion_control=prague" | sudo tee -a /etc/sysctl.conf
-```
+### **8.1 Basic TCP Prague Verification**
+Verify that TCP Prague is available and selected as the congestion control algorithm:
 
-### **7.2 Persist `tc qdisc` Setup**
-Create a startup script `/etc/network/if-up.d/l4s_qdisc`:
 ```bash
-sudo nano /etc/network/if-up.d/l4s_qdisc
-```
-Add:
-```bash
-#!/bin/sh
-tc qdisc replace dev eno1 root dualpi2
-```
-Save and make it executable:
-```bash
-sudo chmod +x /etc/network/if-up.d/l4s_qdisc
+# Check available congestion control algorithms
+sysctl net.ipv4.tcp_available_congestion_control
+
+# Confirm Prague is selected
+sysctl net.ipv4.tcp_congestion_control
 ```
 
-### **7.3 Persist `ethtool` Settings**
-Append to `/etc/rc.local`:
+### **8.2 TCP Prague Parameter Verification**
+Check TCP Prague specific parameters:
+
 ```bash
-sudo nano /etc/rc.local
+# Verify Prague's specific parameters
+sysctl net.ipv4.tcp_prague_l4s_enable
+sysctl net.ipv4.tcp_prague_conservative_ecn
 ```
-Add:
+
+The output should show:
+```
+net.ipv4.tcp_prague_l4s_enable = 1
+net.ipv4.tcp_prague_conservative_ecn = 0
+```
+
+### **8.3 Testing TCP Prague Connection**
+Run a controlled test between two L4S-enabled machines:
+
+**On Server:**
 ```bash
-#!/bin/sh -e
-ethtool -K eno1 tso off gso off gro off lro off
-exit 0
+iperf3 -s -V
 ```
-Make it executable:
+
+**On Client with TCP Prague:**
 ```bash
-sudo chmod +x /etc/rc.local
+iperf3 -c <server-ip> -t 30 -i 1 -Z -V
 ```
+
+The `-Z` flag tells iperf3 to use Prague congestion control and `-V` provides verbose output.
+
+### **8.4 Comparing with Other Congestion Controls**
+Run comparative tests with other congestion control algorithms:
+
+```bash
+# Run test with Cubic
+iperf3 -c <server-ip> -t 30 -i 1 -C cubic
+
+# Run test with BBR
+iperf3 -c <server-ip> -t 30 -i 1 -C bbr
+
+# Run test with Prague
+iperf3 -c <server-ip> -t 30 -i 1 -Z
+```
+
+### **8.5 TCP Prague Performance under Constrained Bandwidth**
+Create bandwidth constraints to test Prague's behavior under congestion:
+
+```bash
+# On server side, create bandwidth limitation (e.g., 100 Mbps)
+sudo tc qdisc add dev eno1 root handle 1: tbf rate 100mbit burst 50kb latency 70ms
+
+# Run test from client
+iperf3 -c <server-ip> -t 60 -i 5 -Z -V
+```
+
+### **8.6 Monitoring ECN Marking with TCP Prague**
+Monitor ECN marking during a TCP Prague transmission:
+
+```bash
+# Start continuous monitoring of TCP metrics
+watch -n 1 'ss -tin | grep -i ecn'
+
+# In another terminal, run iperf3 with Prague
+iperf3 -c <server-ip> -t 60 -Z
+```
+
+### **8.7 Testing TCP Prague Latency Under Load**
+Test how TCP Prague maintains low latency under load:
+
+**Start a background transfer:**
+```bash
+iperf3 -c <server-ip> -t 300 -Z &
+```
+
+**While transfer is running, measure latency:**
+```bash
+ping -c 100 <server-ip>
+```
+
+Compare these ping results with the same test using cubic congestion control.
+
+### **8.8 DualPI2 Queue Monitoring with TCP Prague**
+Monitor the DualPI2 queue statistics during a TCP Prague transfer:
+
+```bash
+# Start TCP Prague transfer
+iperf3 -c <server-ip> -t 120 -Z &
+
+# In another terminal, monitor the queue
+watch -n 1 'tc -s qdisc show dev eno1'
+```
+
+This will show queue statistics including drops, marks, and backlog.
+
+### **8.9 Long-Running Prague Stability Test**
+Test the stability of TCP Prague over a longer duration:
+
+```bash
+iperf3 -c <server-ip> -t 1800 -i 30 -Z -V
+```
+
+This runs a 30-minute test with output every 30 seconds to check for stability issues.
 
 ---
 
-
-## **Step 8: Comprehensive L4S Verification Checklist**  
+## **Step 9: Comprehensive L4S Verification Checklist**  
 *Use this checklist to validate your L4S setup before experiments.*
 
 ### **1. Kernel Verification**
@@ -262,7 +377,7 @@ iperf3 -c [server_ip] -p 5201 -t 20 -Z
   ss -tin | grep ecn  # Should show "ecn" in output
   ```
 
-## **Step 9: Compile the Kernel from Source (Optional)**
+## **Step 10: Compile the Kernel from Source (Optional)**
 If you prefer to compile the kernel instead of using the pre-built package:
 
 1. **Clone the L4S Kernel Repository**
@@ -308,17 +423,15 @@ If you prefer to compile the kernel instead of using the pre-built package:
 - For debugging network issues, use:
   ```bash
   dmesg | grep -i dualpi2
-
   ```
 
   | Symptom               | Checklist Step | Solution |  
 |------------------------|----------------|----------|  
-| `tcp_prague` not available | Step 8.2 | Load module: `sudo modprobe tcp_prague` |  
-| ECN not enabled         | Step 8.3 | Set `net.ipv4.tcp_ecn=3` |  
-| DualPI2 qdisc missing   | Step 8.4 | Reapply: `sudo tc qdisc replace dev eno1 root dualpi2` |  
+| `tcp_prague` not available | Step 9.2 | Load module: `sudo modprobe tcp_prague` |  
+| ECN not enabled         | Step 9.3 | Set `net.ipv4.tcp_ecn=3` |  
+| DualPI2 qdisc missing   | Step 9.4 | Reapply: `sudo tc qdisc replace dev eno1 root dualpi2` |  
 
 ---
-
 
 ### **Additional Notes**
 - **Testing in a Controlled Environment**: Test the L4S setup in a controlled network environment to isolate variables and measure performance accurately.
@@ -448,10 +561,4 @@ iperf3 -c 192.168.1.10 -Z
 
 ![alt text](./testImages/image.png)
 
-To perform DICOM files transfer test on L4S configurable server and client, refer to [DicomTransferTest.md](./DicomTransferTest.md)
-
-
-
-  
-
-
+To perform DICOM files transfer test on L4S configurable server and client, refer to [DicomTransferTest.md](./DicomTransferTest.md)`

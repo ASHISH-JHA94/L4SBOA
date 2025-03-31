@@ -21,6 +21,27 @@ ip link show
 Look for an interface like `eno1`, `ens33`, or `eth0`. Use this correct name in later steps.
 
 ---
+### **1.3 iperf3 Flags Reference Table for L4S Testing**
+
+| Flag       | Description                                   | Purpose in L4S Testing                                                                 | Example Usage                          |
+|------------|----------------------------------------------|---------------------------------------------------------------------------------------|----------------------------------------|
+| `-c`       | Client mode (specify server IP)              | Connect to an L4S-enabled server for testing                                          | `iperf3 -c 192.168.1.10 -Z`           |
+| `-s`       | Server mode                                  | Start an iperf3 server to receive L4S traffic                                         | `iperf3 -s -p 5201`                   |
+| `-Z`       | Use TCP Prague (L4S congestion control)      | Explicitly enable L4S mode for testing low-latency performance                        | `iperf3 -c 192.168.1.10 -Z`           |
+| `-t`       | Test duration (seconds)                      | Define how long to run the test (e.g., for stability checks)                          | `iperf3 -c 192.168.1.10 -Z -t 60`     |
+| `-i`       | Interval (seconds) between periodic reports  | Monitor throughput/latency trends over time                                           | `iperf3 -c 192.168.1.10 -Z -i 5`      |
+| `-V`       | Verbose output                               | Show detailed connection info (e.g., ECN negotiation)                                 | `iperf3 -c 192.168.1.10 -Z -V`        |
+| `-p`       | Server port (default: 5201)                  | Change port if default is blocked or for multi-server tests                           | `iperf3 -c 192.168.1.10 -p 5202`     |
+| `-u`       | UDP mode (instead of TCP)                    | Test latency/jitter without congestion control (rare for L4S)                         | `iperf3 -c 192.168.1.10 -u -b 1G`    |
+| `-b`       | Bandwidth limit (e.g., 100M for 100 Mbps)    | Simulate constrained networks (useful for L4S vs. Cubic comparisons)                   | `iperf3 -c 192.168.1.10 -Z -b 100M`  |
+| `-R`       | Reverse mode (server sends data to client)   | Test asymmetric paths (e.g., NAT/firewall issues)                                     | `iperf3 -c 192.168.1.10 -Z -R`       |
+| `-J`       | JSON output (machine-readable)               | Integrate results into monitoring tools                                               | `iperf3 -c 192.168.1.10 -Z -J`       |
+| `--logfile`| Save output to a file                        | Record test results for analysis                                                      | `iperf3 -c 192.168.1.10 -Z --logfile l4s_test.txt` |
+
+
+
+
+
 
 ## **Step 2: Install the Pre-Built L4S Kernel**
 Instead of compiling the kernel manually, you can install a **pre-built** kernel.

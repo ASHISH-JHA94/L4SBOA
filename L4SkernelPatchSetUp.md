@@ -39,7 +39,7 @@ Look for an interface like `eno1`, `ens33`, or `eth0`. Use this correct name in 
 | `--logfile`| Save output to a file                        | Record test results for analysis                                                      | `iperf3 -c 192.168.1.10 --logfile l4s_test.txt` |
 
 
-
+![img1.1](https://drive.google.com/uc?export=view&id=1uu7oiR2SOnRycEwB8yKOey4-tA7Rjj2c)
 
 
 
@@ -71,7 +71,14 @@ Instead of compiling the kernel manually, you can install a **pre-built** kernel
    ```bash
    uname -r
    ```
-![img1.1](https://drive.google.com/uc?export=view&id=1uu7oiR2SOnRycEwB8yKOey4-tA7Rjj2c)
+
+
+![img2.1](https://drive.google.com/uc?export=view&id=1y_Cl3vZHn7RKzEO0T94nGk69iLk8u_WF)
+
+![img2.2](./testImages/tes2.png)
+
+
+
 
 ---
 
@@ -127,6 +134,8 @@ sudo ethtool -K eno1 tso off gso off gro off lro off
 sudo tc qdisc replace dev eno1 root handle 1: fq limit 20480 flow_limit 10240
 ```
 
+![img4.1](https://drive.google.com/uc?export=view&id=1IyyuBTPsn2VaO6hO8PYUVej3z5GvwrqR)
+
 ---
 
 ## **Step 5: Verify Configuration**
@@ -144,7 +153,7 @@ Run the following checks:
    ```bash
    sysctl net.ipv4.tcp_ecn
    ```
-
+![img5.1](https://drive.google.com/uc?export=view&id=19sf9tv9-3PSlTD8hlzbVwC8jLJY_PJOn)
 ---
 
 ## **Step 6: Make Configuration Persistent**
@@ -215,6 +224,7 @@ eg:
   iperf3 -c 172.21.4.251 -p 5201 -R
   ```
 
+![img7.1](https://drive.google.com/uc?export=view&id=1on-lcH44hU-eWIYv04-vZOVa_8yqWjHf)
 ---
 
 ## **Step 8: Comprehensive TCP Prague Testing**
@@ -230,22 +240,7 @@ sysctl net.ipv4.tcp_available_congestion_control
 sysctl net.ipv4.tcp_congestion_control
 ```
 
-### **8.2 TCP Prague Parameter Verification**
-Check TCP Prague specific parameters:
-
-```bash
-# Verify Prague's specific parameters
-sysctl net.ipv4.tcp_prague_l4s_enable
-sysctl net.ipv4.tcp_prague_conservative_ecn
-```
-
-The output should show:
-```
-net.ipv4.tcp_prague_l4s_enable = 1
-net.ipv4.tcp_prague_conservative_ecn = 0
-```
-
-### **8.3 Testing TCP Prague Connection**
+### **8.2 Testing TCP Prague Connection**
 Run a controlled test between two L4S-enabled machines:
 
 **On Server:**
@@ -260,7 +255,9 @@ iperf3 -c <server-ip> -t 30 -i 1 -V
 
 `-V` provides verbose output.
 
-### **8.4 Comparing with Other Congestion Controls**
+![img8.1](https://drive.google.com/uc?export=view&id=1sycD5DThpd_G5KC7n4Z6UH8UHSklDLRe)
+
+### **8.3 Comparing with Other Congestion Controls**
 Run comparative tests with other congestion control algorithms:
 
 ```bash
@@ -273,8 +270,12 @@ iperf3 -c <server-ip> -t 30 -i 1 -C bbr
 # Run test with Prague
 iperf3 -c <server-ip> -t 30 -i 1
 ```
+![img8.2](https://drive.google.com/uc?export=view&id=1YmAre5j0X2EGzZ0DaKU5tdd0qJwhg6MF)
 
-### **8.5 TCP Prague Performance under Constrained Bandwidth**
+
+![img8.3](https://drive.google.com/uc?export=view&id=14AcZgWjUtKuwVmuYWllLfrTCaEjUBAeb)
+
+### **8.4 TCP Prague Performance under Constrained Bandwidth**
 Create bandwidth constraints to test Prague's behavior under congestion:
 
 ```bash
@@ -284,8 +285,11 @@ sudo tc qdisc add dev eno1 root handle 1: tbf rate 100mbit burst 50kb latency 70
 # Run test from client
 iperf3 -c <server-ip> -t 60 -i 5 -V
 ```
+![img8.4](https://drive.google.com/uc?export=view&id=1s6GLSLUZJ24WPkfOsD-fYxwkNzmiYG0A)
 
-### **8.6 Monitoring ECN Marking with TCP Prague**
+
+
+### **8.5 Monitoring ECN Marking with TCP Prague**
 Monitor ECN marking during a TCP Prague transmission:
 
 ```bash
@@ -295,8 +299,9 @@ watch -n 1 'ss -tin | grep -i ecn'
 # In another terminal, run iperf3 with Prague
 iperf3 -c <server-ip> -t 60 
 ```
+![img8.5](https://drive.google.com/uc?export=view&id=1fvqMNKmGqb96dqJZHTvuksMH23_Ox8I8)
 
-### **8.7 Testing TCP Prague Latency Under Load**
+### **8.6 Testing TCP Prague Latency Under Load**
 Test how TCP Prague maintains low latency under load:
 
 **Start a background transfer:**
@@ -311,7 +316,9 @@ ping -c 100 <server-ip>
 
 Compare these ping results with the same test using cubic congestion control.
 
-### **8.8 DualPI2 Queue Monitoring with TCP Prague**
+![img8.6](https://drive.google.com/uc?export=view&id=1ykUXL_bl2wIPTlMN6Mm7mKSb96iRGO9w)
+
+### **8.7 DualPI2 Queue Monitoring with TCP Prague**
 Monitor the DualPI2 queue statistics during a TCP Prague transfer:
 
 ```bash
@@ -324,7 +331,9 @@ watch -n 1 'tc -s qdisc show dev eno1'
 
 This will show queue statistics including drops, marks, and backlog.
 
-### **8.9 Long-Running Prague Stability Test**
+![img8.7](https://drive.google.com/uc?export=view&id=1zKc85iHDFM_NFClt24bPKX5fnkExIvK2)
+
+### **8.8 Long-Running Prague Stability Test**
 Test the stability of TCP Prague over a longer duration:
 
 ```bash

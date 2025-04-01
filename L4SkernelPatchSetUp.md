@@ -25,18 +25,18 @@ Look for an interface like `eno1`, `ens33`, or `eth0`. Use this correct name in 
 
 | Flag       | Description                                   | Purpose in L4S Testing                                                                 | Example Usage                          |
 |------------|----------------------------------------------|---------------------------------------------------------------------------------------|----------------------------------------|
-| `-c`       | Client mode (specify server IP)              | Connect to an L4S-enabled server for testing                                          | `iperf3 -c 192.168.1.10 -Z`           |
+| `-c`       | Client mode (specify server IP)              | Connect to an L4S-enabled server for testing                                          | `iperf3 -c 192.168.1.10`           |
 | `-s`       | Server mode                                  | Start an iperf3 server to receive L4S traffic                                         | `iperf3 -s -p 5201`                   |
-| `-Z`       | Use TCP Prague (L4S congestion control)      | Explicitly enable L4S mode for testing low-latency performance                        | `iperf3 -c 192.168.1.10 -Z`           |
-| `-t`       | Test duration (seconds)                      | Define how long to run the test (e.g., for stability checks)                          | `iperf3 -c 192.168.1.10 -Z -t 60`     |
-| `-i`       | Interval (seconds) between periodic reports  | Monitor throughput/latency trends over time                                           | `iperf3 -c 192.168.1.10 -Z -i 5`      |
-| `-V`       | Verbose output                               | Show detailed connection info (e.g., ECN negotiation)                                 | `iperf3 -c 192.168.1.10 -Z -V`        |
+| `-Z`       | Zerocopy      | NA                        | `iperf3 -c 192.168.1.10 -Z`           |
+| `-t`       | Test duration (seconds)                      | Define how long to run the test (e.g., for stability checks)                          | `iperf3 -c 192.168.1.10 -t 60`     |
+| `-i`       | Interval (seconds) between periodic reports  | Monitor throughput/latency trends over time                                           | `iperf3 -c 192.168.1.10 -i 5`      |
+| `-V`       | Verbose output                               | Show detailed connection info (e.g., ECN negotiation)                                 | `iperf3 -c 192.168.1.10 -V`        |
 | `-p`       | Server port (default: 5201)                  | Change port if default is blocked or for multi-server tests                           | `iperf3 -c 192.168.1.10 -p 5202`     |
 | `-u`       | UDP mode (instead of TCP)                    | Test latency/jitter without congestion control (rare for L4S)                         | `iperf3 -c 192.168.1.10 -u -b 1G`    |
-| `-b`       | Bandwidth limit (e.g., 100M for 100 Mbps)    | Simulate constrained networks (useful for L4S vs. Cubic comparisons)                   | `iperf3 -c 192.168.1.10 -Z -b 100M`  |
-| `-R`       | Reverse mode (server sends data to client)   | Test asymmetric paths (e.g., NAT/firewall issues)                                     | `iperf3 -c 192.168.1.10 -Z -R`       |
-| `-J`       | JSON output (machine-readable)               | Integrate results into monitoring tools                                               | `iperf3 -c 192.168.1.10 -Z -J`       |
-| `--logfile`| Save output to a file                        | Record test results for analysis                                                      | `iperf3 -c 192.168.1.10 -Z --logfile l4s_test.txt` |
+| `-b`       | Bandwidth limit (e.g., 100M for 100 Mbps)    | Simulate constrained networks (useful for L4S vs. Cubic comparisons)                   | `iperf3 -c 192.168.1.10 -b 100M`  |
+| `-R`       | Reverse mode (server sends data to client)   | Test asymmetric paths (e.g., NAT/firewall issues)                                     | `iperf3 -c 192.168.1.10 -R`       |
+| `-J`       | JSON output (machine-readable)               | Integrate results into monitoring tools                                               | `iperf3 -c 192.168.1.10 -J`       |
+| `--logfile`| Save output to a file                        | Record test results for analysis                                                      | `iperf3 -c 192.168.1.10 --logfile l4s_test.txt` |
 
 
 
@@ -254,10 +254,10 @@ iperf3 -s -V
 
 **On Client with TCP Prague:**
 ```bash
-iperf3 -c <server-ip> -t 30 -i 1 -Z -V
+iperf3 -c <server-ip> -t 30 -i 1 -V
 ```
 
-The `-Z` flag tells iperf3 to use Prague congestion control and `-V` provides verbose output.
+`-V` provides verbose output.
 
 ### **8.4 Comparing with Other Congestion Controls**
 Run comparative tests with other congestion control algorithms:
@@ -270,7 +270,7 @@ iperf3 -c <server-ip> -t 30 -i 1 -C cubic
 iperf3 -c <server-ip> -t 30 -i 1 -C bbr
 
 # Run test with Prague
-iperf3 -c <server-ip> -t 30 -i 1 -Z
+iperf3 -c <server-ip> -t 30 -i 1
 ```
 
 ### **8.5 TCP Prague Performance under Constrained Bandwidth**
@@ -281,7 +281,7 @@ Create bandwidth constraints to test Prague's behavior under congestion:
 sudo tc qdisc add dev eno1 root handle 1: tbf rate 100mbit burst 50kb latency 70ms
 
 # Run test from client
-iperf3 -c <server-ip> -t 60 -i 5 -Z -V
+iperf3 -c <server-ip> -t 60 -i 5 -V
 ```
 
 ### **8.6 Monitoring ECN Marking with TCP Prague**
@@ -292,7 +292,7 @@ Monitor ECN marking during a TCP Prague transmission:
 watch -n 1 'ss -tin | grep -i ecn'
 
 # In another terminal, run iperf3 with Prague
-iperf3 -c <server-ip> -t 60 -Z
+iperf3 -c <server-ip> -t 60 
 ```
 
 ### **8.7 Testing TCP Prague Latency Under Load**
@@ -300,7 +300,7 @@ Test how TCP Prague maintains low latency under load:
 
 **Start a background transfer:**
 ```bash
-iperf3 -c <server-ip> -t 300 -Z &
+iperf3 -c <server-ip> -t 300 &
 ```
 
 **While transfer is running, measure latency:**
@@ -315,7 +315,7 @@ Monitor the DualPI2 queue statistics during a TCP Prague transfer:
 
 ```bash
 # Start TCP Prague transfer
-iperf3 -c <server-ip> -t 120 -Z &
+iperf3 -c <server-ip> -t 120 &
 
 # In another terminal, monitor the queue
 watch -n 1 'tc -s qdisc show dev eno1'
@@ -327,7 +327,7 @@ This will show queue statistics including drops, marks, and backlog.
 Test the stability of TCP Prague over a longer duration:
 
 ```bash
-iperf3 -c <server-ip> -t 1800 -i 30 -Z -V
+iperf3 -c <server-ip> -t 1800 -i 30 -V
 ```
 
 This runs a 30-minute test with output every 30 seconds to check for stability issues.
@@ -389,7 +389,7 @@ iperf3 -s -p 5201
 ```
 **Client**:
 ```bash
-iperf3 -c [server_ip] -p 5201 -t 20 -Z
+iperf3 -c [server_ip] -p 5201 -t 20 
 ```
 ✅ **Success Criteria**:  
 - Stable throughput with no errors.  
@@ -506,9 +506,9 @@ Connecting to host 192.168.1.10, port 5201
 ```
 
 **2. With L4S Latency Measurements:**
-Add `-Z` flag for Prague congestion control:
+
 ```bash
-iperf3 -c 192.168.1.10 -Z -t 30
+iperf3 -c 192.168.1.10 -t 30
 ```
 Expected:
 ```
@@ -577,7 +577,7 @@ iperf3 -c 192.168.1.10 -C cubic
 
 3. On Client (L4S):
 ```bash
-iperf3 -c 192.168.1.10 -Z
+iperf3 -c 192.168.1.10
 ```
 
 **Expected Difference:**

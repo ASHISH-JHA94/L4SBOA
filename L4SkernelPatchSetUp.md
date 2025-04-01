@@ -71,6 +71,7 @@ Instead of compiling the kernel manually, you can install a **pre-built** kernel
    ```bash
    uname -r
    ```
+![img1.1](https://drive.google.com/uc?export=view&id=1uu7oiR2SOnRycEwB8yKOey4-tA7Rjj2c)
 
 ---
 

@@ -39,7 +39,7 @@ Look for an interface like `eno1`, `ens33`, or `eth0`. Use this correct name in 
 | `--logfile`| Save output to a file                        | Record test results for analysis                                                      | `iperf3 -c 192.168.1.10 --logfile l4s_test.txt` |
 
 
-![img1.1](https://drive.google.com/uc?export=view&id=1uu7oiR2SOnRycEwB8yKOey4-tA7Rjj2c)
+![img1.1](./testImages/img1.1.png)
 
 
 
@@ -73,7 +73,7 @@ Instead of compiling the kernel manually, you can install a **pre-built** kernel
    ```
 
 
-![img2.1](https://drive.google.com/uc?export=view&id=1y_Cl3vZHn7RKzEO0T94nGk69iLk8u_WF)
+![img2.1](./testImages/img2.1.png)
 
 ![img2.2](./testImages/tes2.png)
 
@@ -134,7 +134,7 @@ sudo ethtool -K eno1 tso off gso off gro off lro off
 sudo tc qdisc replace dev eno1 root handle 1: fq limit 20480 flow_limit 10240
 ```
 
-![img4.1](https://drive.google.com/uc?export=view&id=1IyyuBTPsn2VaO6hO8PYUVej3z5GvwrqR)
+![img4.1](./testImages/img4.1.png)
 
 ---
 
@@ -153,7 +153,7 @@ Run the following checks:
    ```bash
    sysctl net.ipv4.tcp_ecn
    ```
-![img5.1](https://drive.google.com/uc?export=view&id=19sf9tv9-3PSlTD8hlzbVwC8jLJY_PJOn)
+![img5.1](./testImages/img5.1.png)
 ---
 
 ## **Step 6: Make Configuration Persistent**
@@ -224,7 +224,7 @@ eg:
   iperf3 -c 172.21.4.251 -p 5201 -R
   ```
 
-![img7.1](https://drive.google.com/uc?export=view&id=1on-lcH44hU-eWIYv04-vZOVa_8yqWjHf)
+![img7.1](./testImages/img7.1.png)
 ---
 
 ## **Step 8: Comprehensive TCP Prague Testing**
@@ -255,7 +255,7 @@ iperf3 -c <server-ip> -t 30 -i 1 -V
 
 `-V` provides verbose output.
 
-![img8.1](https://drive.google.com/uc?export=view&id=1sycD5DThpd_G5KC7n4Z6UH8UHSklDLRe)
+![img8.1](./testImages/img8.1.png)
 
 ### **8.3 Comparing with Other Congestion Controls**
 Run comparative tests with other congestion control algorithms:
@@ -270,10 +270,10 @@ iperf3 -c <server-ip> -t 30 -i 1 -C bbr
 # Run test with Prague
 iperf3 -c <server-ip> -t 30 -i 1
 ```
-![img8.2](https://drive.google.com/uc?export=view&id=1YmAre5j0X2EGzZ0DaKU5tdd0qJwhg6MF)
+![img8.2](./testImages/img8.2.png)
 
 
-![img8.3](https://drive.google.com/uc?export=view&id=14AcZgWjUtKuwVmuYWllLfrTCaEjUBAeb)
+![img8.3](./testImages/img8.3.png)
 
 ### **8.4 TCP Prague Performance under Constrained Bandwidth**
 Create bandwidth constraints to test Prague's behavior under congestion:
@@ -285,7 +285,7 @@ sudo tc qdisc add dev eno1 root handle 1: tbf rate 100mbit burst 50kb latency 70
 # Run test from client
 iperf3 -c <server-ip> -t 60 -i 5 -V
 ```
-![img8.4](https://drive.google.com/uc?export=view&id=1s6GLSLUZJ24WPkfOsD-fYxwkNzmiYG0A)
+![img8.4](./testImages/img8.4.png)
 
 
 
@@ -299,7 +299,7 @@ watch -n 1 'ss -tin | grep -i ecn'
 # In another terminal, run iperf3 with Prague
 iperf3 -c <server-ip> -t 60 
 ```
-![img8.5](https://drive.google.com/uc?export=view&id=1fvqMNKmGqb96dqJZHTvuksMH23_Ox8I8)
+![img8.5](./testImages/img8.5.png)
 
 ### **8.6 Testing TCP Prague Latency Under Load**
 Test how TCP Prague maintains low latency under load:
@@ -316,7 +316,7 @@ ping -c 100 <server-ip>
 
 Compare these ping results with the same test using cubic congestion control.
 
-![img8.6](https://drive.google.com/uc?export=view&id=1ykUXL_bl2wIPTlMN6Mm7mKSb96iRGO9w)
+![img8.6](./testImages/img8.6.png)
 
 ### **8.7 DualPI2 Queue Monitoring with TCP Prague**
 Monitor the DualPI2 queue statistics during a TCP Prague transfer:
@@ -331,7 +331,7 @@ watch -n 1 'tc -s qdisc show dev eno1'
 
 This will show queue statistics including drops, marks, and backlog.
 
-![img8.7](https://drive.google.com/uc?export=view&id=1zKc85iHDFM_NFClt24bPKX5fnkExIvK2)
+![img8.7](./testImages/img8.7.png)
 
 ### **8.8 Long-Running Prague Stability Test**
 Test the stability of TCP Prague over a longer duration:

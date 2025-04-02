@@ -272,20 +272,22 @@ iperf3 -c <server-ip> -t 30 -i 1
 ```
 ![img8.2](./testImages/img8.2.png)
 
+![img8.8](./testImages/img8.8.png)
 
-![img8.3](./testImages/img8.3.png)
 
 ### **8.4 TCP Prague Performance under Constrained Bandwidth**
 Create bandwidth constraints to test Prague's behavior under congestion:
 
 ```bash
 # On server side, create bandwidth limitation (e.g., 100 Mbps)
-sudo tc qdisc add dev eno1 root handle 1: tbf rate 100mbit burst 50kb latency 70ms
+sudo tc qdisc replace dev eno1 root handle 1: tbf rate 100mbit burst 50kb latency 70ms
 
 # Run test from client
 iperf3 -c <server-ip> -t 60 -i 5 -V
 ```
 ![img8.4](./testImages/img8.4.png)
+
+![img8.3](./testImages/img8.3.png)
 
 
 

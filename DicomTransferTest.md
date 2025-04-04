@@ -49,6 +49,14 @@ netstat -tulnp | grep 1104
 ```
 
 #### **3.2 Client Test Script**  
+
+## First test basic connectivity:
+```bash
+telnet $SERVER_IP $PORT
+```
+
+
+
 ```bash
 #!/bin/bash
 # Flexible DICOM Transfer Tester

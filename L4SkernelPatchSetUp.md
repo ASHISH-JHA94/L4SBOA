@@ -39,7 +39,7 @@ Look for an interface like `eno1`, `ens33`, or `eth0`. Use this correct name in 
 | `--logfile`| Save output to a file                        | Record test results for analysis                                                      | `iperf3 -c 192.168.1.10 --logfile l4s_test.txt` |
 
 
-![img1.1](./testImages/img1.1.png)
+![img1.1](./testImages/L4STestImg/img1.1.png)
 
 
 
@@ -73,9 +73,9 @@ Instead of compiling the kernel manually, you can install a **pre-built** kernel
    ```
 
 
-![img2.1](./testImages/img2.1.png)
+![img2.1](./testImages/L4STestImg/img2.1.png)
 
-![img2.2](./testImages/tes2.png)
+![img2.2](./testImages/L4STestImg/tes2.png)
 
 
 
@@ -134,7 +134,7 @@ sudo ethtool -K eno1 tso off gso off gro off lro off
 sudo tc qdisc replace dev eno1 root handle 1: fq limit 20480 flow_limit 10240
 ```
 
-![img4.1](./testImages/img4.1.png)
+![img4.1](./testImages/L4STestImg/img4.1.png)
 
 ---
 
@@ -153,7 +153,7 @@ Run the following checks:
    ```bash
    sysctl net.ipv4.tcp_ecn
    ```
-![img5.1](./testImages/img5.1.png)
+![img5.1](./testImages/L4STestImg/img5.1.png)
 ---
 
 ## **Step 6: Make Configuration Persistent**
@@ -224,7 +224,7 @@ eg:
   iperf3 -c 172.21.4.251 -p 5201 -R
   ```
 
-![img7.1](./testImages/img7.1.png)
+![img7.1](./testImages/L4STestImg/img7.1.png)
 ---
 
 ## **Step 8: Comprehensive TCP Prague Testing**
@@ -255,7 +255,7 @@ iperf3 -c <server-ip> -t 30 -i 1 -V
 
 `-V` provides verbose output.
 
-![img8.1](./testImages/img8.1.png)
+![img8.1](./testImages/L4STestImg/img8.1.png)
 
 ### **8.3 Comparing with Other Congestion Controls**
 Run comparative tests with other congestion control algorithms:
@@ -270,9 +270,9 @@ iperf3 -c <server-ip> -t 30 -i 1 -C bbr
 # Run test with Prague
 iperf3 -c <server-ip> -t 30 -i 1
 ```
-![img8.2](./testImages/img8.2.png)
+![img8.2](./testImages/L4STestImg/img8.2.png)
 
-![img8.8](./testImages/img8.8.png)
+![img8.8](./testImages/L4STestImg/img8.8.png)
 
 
 ### **8.4 TCP Prague Performance under Constrained Bandwidth**
@@ -285,9 +285,9 @@ sudo tc qdisc replace dev eno1 root handle 1: tbf rate 100mbit burst 50kb latenc
 # Run test from client
 iperf3 -c <server-ip> -t 60 -i 5 -V
 ```
-![img8.4](./testImages/img8.4.png)
+![img8.4](./testImages/L4STestImg/img8.4.png)
 
-![img8.3](./testImages/img8.3.png)
+![img8.3](./testImages/L4STestImg/img8.3.png)
 
 
 
@@ -301,7 +301,7 @@ watch -n 1 'ss -tin | grep -i ecn'
 # In another terminal, run iperf3 with Prague
 iperf3 -c <server-ip> -t 60 
 ```
-![img8.5](./testImages/img8.5.png)
+![img8.5](./testImages/L4STestImg/img8.5.png)
 
 ### **8.6 Testing TCP Prague Latency Under Load**
 Test how TCP Prague maintains low latency under load:
@@ -318,7 +318,7 @@ ping -c 100 <server-ip>
 
 Compare these ping results with the same test using cubic congestion control.
 
-![img8.6](./testImages/img8.6.png)
+![img8.6](./testImages/L4STestImg/img8.6.png)
 
 ### **8.7 DualPI2 Queue Monitoring with TCP Prague**
 Monitor the DualPI2 queue statistics during a TCP Prague transfer:
@@ -333,7 +333,7 @@ watch -n 1 'tc -s qdisc show dev eno1'
 
 This will show queue statistics including drops, marks, and backlog.
 
-![img8.7](./testImages/img8.7.png)
+![img8.7](./testImages/L4STestImg/img8.7.png)
 
 ### **8.8 Long-Running Prague Stability Test**
 Test the stability of TCP Prague over a longer duration:
@@ -596,6 +596,6 @@ iperf3 -c 192.168.1.10
 - L4S should show lower latency under congestion
 - Similar throughput but fewer retransmits
 
-![alt text](./testImages/image.png)
+![alt text](./testImages/L4STestImg/image.png)
 
 To perform DICOM files transfer test on L4S configurable server and client, refer to [DicomTransferTest.md](./DicomTransferTest.md)`

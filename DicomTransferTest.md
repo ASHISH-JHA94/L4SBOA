@@ -32,7 +32,7 @@ find ~/dicom_test -type f -name "*.dcm" -exec dcmdump {} + | head
 
 ---
 
-[img2.png](./testImages/DICOMTestImg/img2.png)
+![img2.png](./testImages/DICOMTestImg/img2.png)
 
 ### **3. Transfer Testing Methodology**  
 #### **3.1 Server Configuration**  
@@ -50,7 +50,7 @@ ps aux | grep [s]torescp
 netstat -tulnp | grep 1104
 ```
 
-[img1.png](./testImages/DICOMTestImg/img1.png)
+![img1.png](./testImages/DICOMTestImg/img1.png)
 
 #### **3.2 Client Test Script**  
 
@@ -84,10 +84,10 @@ for size_dir in small medium large; do
 done
 ```
 
-#if you want to refere how I created my Script file below is refernce
+### If you want to refere how I created my Script file below is refernce
 [l4s_transfer.sh](./testImages/DICOMTestImg/l4s_transfer.sh).
 
-[img3.png](./testImages/DICOMTestImg/img3.png)
+![img3.png](./testImages/DICOMTestImg/img3.png)
 ---
 
 ### **4. Test Scenarios**  

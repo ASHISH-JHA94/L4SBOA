@@ -1,259 +1,136 @@
-# **L4S Telehealth Testing: DICOM Transfer Performance Evaluation**
+# **L4S Telehealth Testing: DICOM Transfer Performance Evaluation**  
+## **Flexible Testing with User-Provided Datasets**  
 
-## **1. Introduction**
-This document provides a **comprehensive methodology** for testing DICOM medical image transfers over L4S-enabled networks. The goal is to validate whether L4S improves:
-- **Throughput** for large radiology files (CT/MRI)  
-- **Reliability** under network congestion (packet loss, latency)  
-- **Fairness** when sharing bandwidth with other telehealth traffic  
+### **1. Introduction**  
+This methodology enables testing with **user-acquired DICOM datasets** of varying sizes. Users should:  
+1. Obtain datasets from clinical PACS or public archives
+2. Use DICOM files from the cancer imaging archive (TCIA). https://www.cancerimagingarchive.net/browse-collections/
+3. Organize them by size in the test directory  
+4. Run standardized L4S performance tests  
+
 
 ---
 
-## **2. Test Environment Setup**
-### **2.1 Prerequisites**
-- Two L4S-enabled Linux machines (client + server)  
-- `dcmtk` installed for DICOM operations:  
-  ```bash
-  sudo apt install dcmtk
-  ```
-- Network interface configured with L4S (DualPI2 qdisc, TCP Prague)  
-  ```bash
-  # Install required kernel modules if not present
-  sudo modprobe sch_dualpi2
-  
-  # Configure the network interface with DualPI2 queue discipline
-  sudo tc qdisc replace dev eth0 root dualpi2
-  
-  # Enable TCP Prague congestion control
-  sudo sysctl -w net.ipv4.tcp_congestion_control=prague
-  
-  # Check that Prague is active
-  sysctl net.ipv4.tcp_congestion_control
-  ```
-  Note: Replace `eth0` with your actual network interface name (e.g., `eno1`, `enp2s0`, etc.)
+### **2. Test Environment Setup**  
+#### **2.1 Prerequisite Configuration** 
+L4S Should be configure on both client and Server using documentation [link](./L4SkernelPatchSetUp.md) 
 
-### **2.2 Generate Test DICOM Files**
 ```bash
-# Create synthetic DICOM files (varying sizes)
-mkdir -p dicom_test && cd dicom_test
+# Verify setup
+tc qdisc show dev eno1
+sysctl net.ipv4.tcp_congestion_control
+```
 
-# Create proper DICOM file structure (raw binary isn't valid DICOM)
-for size in 10 100 500; do
-  # First create raw data
-  dd if=/dev/urandom of=raw_${size}MB.bin bs=1M count=${size}
-  
-  # Then convert to valid DICOM using dcmtk tools
-  img2dcm -df dcm_template.dcm raw_${size}MB.bin ${size}MB.dcm
-done
+#### **2.2 Dataset Organization**  
+```bash
+# Recommended directory structure
+mkdir -p ~/dicom_test/{small,medium,large}
 
-# Alternatively, use dcmtk's dcmgpdir to create valid test files
-dcmgpdir -nC -v -d test_dicoms
+# Example content verification
+find ~/dicom_test -type f -name "*.dcm" -exec dcmdump {} + | head
 ```
 
 ---
 
-## **3. DICOM Transfer Tests**
-### **3.1 Baseline Transfer (No Congestion)**
-**Purpose:** Measure optimal performance.  
+![img2.png](./testImages/DICOMTestImg/img2.png)
 
-#### **Commands**
+### **3. Transfer Testing Methodology**  
+#### **3.1 Server Configuration**  
 ```bash
-# On Server (receiver)
-storescp --fork --promiscuous --output-directory /dicom_receiver 104 &
+# Start receiver (adjust AE title)
 
-# On Client (sender)
-time storescu -v -aet SENDER -aec RECEIVER server_ip 104 dicom_test/500MB.dcm
+# Start storescp on port 1104 (run in foreground first to check for errors)
+storescp -v -aet PACS_SERVER -od ~/dicom_received 1104
+
+# If successful, run in background with:
+storescp -v -aet PACS_SERVER -od ~/dicom_received 1104 > ~/dicom_logs/storescp.log 2>&1 &
+
+# Verify it's running
+ps aux | grep [s]torescp
+netstat -tulnp | grep 1104
 ```
 
-#### **Metrics to Record**
-| Metric               | Command                                | Expected L4S Advantage       |
-|----------------------|----------------------------------------|-----------------------------|
-| Transfer Time        | `time storescu ...`                   | Faster than Cubic/BBR       |
-| Throughput (MB/s)    | `file_size / transfer_time`           | Higher sustained bandwidth  |
-| Retransmissions      | `ss -ti | grep -i retrans`            | Fewer retransmits          |
-| ECN Usage            | `ss -tin | grep -i ecn`               | Should show "ecn"          |
+![img1.png](./testImages/DICOMTestImg/img1.png)
 
----
+#### **3.2 Client Test Script**  
 
-### **3.2 Congestion Stress Test**
-**Purpose:** Validate performance under packet loss/latency.  
-
-#### **Commands**
+## First test basic connectivity:
 ```bash
-# Add 50ms delay + 2% packet loss
-sudo tc qdisc add dev eth0 parent root: handle 1: netem delay 50ms loss 2%
-
-# Start competing traffic (simulate telehealth mix)
-# L4S traffic with Prague congestion control
-iperf3 -c server_ip -p 5201 -t 60 -C prague &
-  
-# Classic traffic with Cubic congestion control 
-iperf3 -c server_ip -p 5202 -C cubic &
-
-# Run DICOM transfer
-time storescu -v -aet SENDER -aec RECEIVER server_ip 104 dicom_test/500MB.dcm
-
-# Remove netem qdisc when done
-sudo tc qdisc del dev eth0 root
+telnet $SERVER_IP $PORT
 ```
 
-#### **Metrics to Record**
-| Metric               | Command                                  | Expected L4S Result         |
-|----------------------|------------------------------------------|-----------------------------|
-| Transfer Time        | `time storescu ...`                     | <20% increase from baseline |
-| Packet Loss          | `tc -s qdisc show dev eth0`             | DualPI2 keeps loss <5%      |
-| Queue Delay          | `tc -s qdisc show dev eth0 | grep delay` | Stable under 10ms          |
-| Competing Flow Fairness | `iftop -nP -i eth0`                  | L4S doesn't starve Cubic    |
 
----
 
-### **3.3 Multi-Stream Fairness Test**
-**Purpose:** Verify fairness when transferring multiple studies.  
-
-#### **Commands**
-```bash
-# Run 3 concurrent DICOM transfers
-for i in {1..3}; do  
-  storescu -v -aet SENDER_${i} -aec RECEIVER server_ip 104 dicom_test/100MB.dcm &  
-done
-
-# Monitor bandwidth allocation
-iftop -nP -i eth0
-```
-
-#### **Metrics to Record**
-| Metric               | Command                                   | Expected Result             |
-|----------------------|-------------------------------------------|-----------------------------|
-| Throughput per Stream | `iftop -nP -i eth0`                     | Within ±15% of each other   |
-| Retransmissions      | `ss -ti | grep -A 1 -i retrans`          | Balanced across streams     |
-
----
-
-### **3.4 Large-File Burst Stability**
-**Purpose:** Test TCP behavior with 1GB+ files.  
-
-#### **Commands**
-```bash
-# Create a larger test file
-dd if=/dev/urandom of=raw_1GB.bin bs=1M count=1024
-img2dcm -df dcm_template.dcm raw_1GB.bin 1GB.dcm
-
-# Transfer while monitoring TCP metrics
-storescu -v -aet SENDER -aec RECEIVER server_ip 104 dicom_test/1GB.dcm &
-PID=$!
-
-# Watch congestion window stats every second
-watch -n 1 "ss -tiepm src :$(ss -tpn | grep $PID | awk '{print $4}' | cut -d: -f2)"
-
-# Wait for transfer to complete
-wait $PID
-```
-
-#### **Metrics to Record**
-| Metric               | Command                                       | Expected Result             |
-|----------------------|-----------------------------------------------|-----------------------------|
-| Congestion Window    | `ss -tiepm | grep cwnd`                      | Grows smoothly, no collapses |
-| Kernel Errors        | `dmesg | grep -iE 'tcp_prague|l4s'`          | No warnings/errors          |
-
----
-
-## **4. Advanced Validation**
-### **4.1 Wireshark Analysis**
-```bash
-# Capture DICOM traffic with ECN marking info
-sudo tshark -i eth0 -f "tcp port 104" -w dicom_l4s.pcap
-
-# Analyze ECN markings and retransmissions
-tshark -r dicom_l4s.pcap -Y "ip.dsfield.ecn == 0x03" | wc -l
-tshark -r dicom_l4s.pcap -q -z "io,stat,1,tcp.analysis.retransmission"
-
-# Check for L4S markings in packets
-tshark -r dicom_l4s.pcap -Y "ip.dsfield.ecn == 0x01" | wc -l
-```
-
-### **4.2 Real-World PACS Test**
-```bash
-# Send to actual PACS (replace with ANTHC's AE Title and IP)
-storescu -v -aet MY_CLINIC -aec ANTHC_PACS pacs_ip 104 dicom_test/100MB.dcm
-
-# Verify successful storage (if you have access to the PACS)
-findscu -v -S -aet MY_CLINIC -aec ANTHC_PACS pacs_ip 104 -k QueryRetrieveLevel=SERIES
-```
-
----
-
-## **5. Expected Results Table**
-| Test Case          | Metric               | L4S (Expected) | Cubic (Baseline) | Improvement |
-|--------------------|----------------------|----------------|------------------|-------------|
-| Baseline Transfer  | Throughput (MB/s)    | 180            | 120              | +50%        |
-| Congestion Stress  | Transfer Time Increase | +15%         | +300%            | 20x better  |
-| Multi-Stream       | Fairness Deviation   | ±10%           | ±50%             | 5x fairer   |
-| Large-File Burst   | Cwnd Stability       | Smooth         | Frequent drops   | No timeouts |
-
----
-
-## **6. Automation Script**
 ```bash
 #!/bin/bash
-# DICOM Automated Test Script
-SERVER_IP="172.21.4.251"
-DICOM_DIR="dicom_test"
-AET_SENDER="SENDER"
-AEC_RECEIVER="RECEIVER"
-INTERFACE="eth0"  # Change to your interface name
+# Flexible DICOM Transfer Tester
 
-echo "Setting up L4S..."
-sudo modprobe sch_dualpi2
-sudo tc qdisc replace dev $INTERFACE root dualpi2
-sudo sysctl -w net.ipv4.tcp_congestion_control=prague
+SERVER="SERVER_IP" 
+PORT=1104
+AET="TEST_CLIENT"
+AEC="PACS_SERVER"
 
-echo "1. Baseline Transfer Test"
-echo "Starting DICOM receiver on server..."
-ssh user@$SERVER_IP "storescp --fork --promiscuous --output-directory /dicom_receiver 104 &"
-sleep 2
-
-echo "Sending DICOM files..."
-time storescu -v -aet $AET_SENDER -aec $AEC_RECEIVER $SERVER_IP 104 $DICOM_DIR/500MB.dcm
-echo "Baseline throughput: $((500*1024*1024 / $(cat /tmp/time_result) / 1024 / 1024)) MB/s"
-
-echo "2. Congestion Test"
-echo "Adding network congestion..."
-sudo tc qdisc add dev $INTERFACE parent root: handle 1: netem delay 50ms loss 2%
-
-echo "Starting competing traffic..."
-iperf3 -c $SERVER_IP -p 5201 -t 120 -C prague &
-iperf3 -c $SERVER_IP -p 5202 -t 120 -C cubic &
-sleep 5
-
-echo "Sending DICOM under congestion..."
-time storescu -v -aet $AET_SENDER -aec $AEC_RECEIVER $SERVER_IP 104 $DICOM_DIR/100MB.dcm
-
-echo "Removing network congestion..."
-sudo tc qdisc del dev $INTERFACE root
-
-echo "3. Multi-Stream Test"
-echo "Starting multiple transfers..."
-for i in {1..3}; do 
-  storescu -v -aet ${AET_SENDER}_${i} -aec $AEC_RECEIVER $SERVER_IP 104 $DICOM_DIR/100MB.dcm &
+for size_dir in small medium large; do
+  [ -d ~/dicom_test/$size_dir ] || continue
+  
+  echo "=== Testing $size_dir dataset ==="
+  time storescu -v -aet $AET -aec $AEC \
+    --max-pdu 65536 \
+    ~/dicom_test/$size_dir/* \
+    $SERVER $PORT
+    
+  echo "=== Network Metrics ==="
+  ss -tin dst $SERVER | grep -E 'ecn|cwnd|rtt'
 done
-wait
+```
 
-echo "Tests complete!"
-echo "Restoring network settings..."
-sudo sysctl -w net.ipv4.tcp_congestion_control=cubic
+### If you want to refere how I created my Script file below is refernce
+[l4s_transfer.sh](./testImages/DICOMTestImg/l4s_transfer.sh).
+
+![img3.png](./testImages/DICOMTestImg/img3.png)
+---
+
+### **4. Test Scenarios**  
+#### **4.1 Baseline Performance**  
+```bash
+# Clean network condition test
+./test_script.sh > baseline_results.log
+```
+
+#### **4.2 Congestion Testing**  
+```bash
+# Add impairment (run in separate terminal)
+sudo tc qdisc add dev eno1 parent dualpi2: handle 1: netem delay 50ms loss 2%
+
+# Run tests
+./test_script.sh > congested_results.log
+
+# Remove impairment
+sudo tc qdisc del dev eno1 root
 ```
 
 ---
 
-## **7. Conclusion**
-This test plan validates L4S for **Alaska's telehealth needs** by:  
-1. Ensuring **fast transfers** of large radiology files.  
-2. Maintaining **reliability** under satellite/WAN congestion.  
-3. Guaranteeing **fairness** with other clinical traffic.  
 
-**Next Steps:**  
-- Deploy in ANTHC's testbed with real PACS systems.  
-- Compare against non-L4S results (Cubic/BBR).  
-- Optimize DICOM transfer parameters for L4S:
-  - Test with larger `MaxPDUSize` (default: 16KB → test 64KB)
-  - Adjust `--max-send-pdu` and `--max-receive-pdu` parameters
-  - Test with multiple association requests (`--propose-tls`)
+### **5. Customization Guide**  
+**To Adapt for Your Environment**:  
+1. Replace `SERVER`, `AET`, and `AEC` with your values  
+2. Place DICOM files in corresponding size directories  
+3. Adjust impairment parameters in congestion tests  
+
+**Key Recommendations**:  
+- Use at least 3 different dataset sizes  
+- Include multi-slice studies for real-world simulation  
+- Verify DICOM validity with `dcmdump` before testing  
+
+---
+
+### **6. Analysis Tools**  
+**Post-Processing**:  
+```bash
+# Calculate average throughput
+awk '/Throughput/{sum+=$2; count++} END{print "Avg:",sum/count,"MB/s"}' results.log
+
+# Check for retransmissions
+grep -A 5 'retrans' results.log
+```

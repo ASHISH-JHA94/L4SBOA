@@ -65,7 +65,7 @@ telnet $SERVER_IP $PORT
 #!/bin/bash
 # Flexible DICOM Transfer Tester
 
-SERVER="172.21.4.251"
+SERVER="SERVER_IP" #eg 172.21.4.251
 PORT=1104
 AET="TEST_CLIENT"
 AEC="PACS_SERVER"

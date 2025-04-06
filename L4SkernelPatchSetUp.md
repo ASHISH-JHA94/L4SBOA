@@ -25,18 +25,18 @@ Look for an interface like `eno1`, `ens33`, or `eth0`. Use this correct name in 
 
 | Flag       | Description                                   | Purpose in L4S Testing                                                                 | Example Usage                          |
 |------------|----------------------------------------------|---------------------------------------------------------------------------------------|----------------------------------------|
-| `-c`       | Client mode (specify server IP)              | Connect to an L4S-enabled server for testing                                          | `iperf3 -c 192.168.1.10`           |
+| `-c`       | Client mode (specify server IP)              | Connect to an L4S-enabled server for testing                                          | `iperf3 -c <server-ip>`           |
 | `-s`       | Server mode                                  | Start an iperf3 server to receive L4S traffic                                         | `iperf3 -s -p 5201`                   |
-| `-Z`       | Zerocopy      | NA                        | `iperf3 -c 192.168.1.10 -Z`           |
-| `-t`       | Test duration (seconds)                      | Define how long to run the test (e.g., for stability checks)                          | `iperf3 -c 192.168.1.10 -t 60`     |
-| `-i`       | Interval (seconds) between periodic reports  | Monitor throughput/latency trends over time                                           | `iperf3 -c 192.168.1.10 -i 5`      |
-| `-V`       | Verbose output                               | Show detailed connection info (e.g., ECN negotiation)                                 | `iperf3 -c 192.168.1.10 -V`        |
-| `-p`       | Server port (default: 5201)                  | Change port if default is blocked or for multi-server tests                           | `iperf3 -c 192.168.1.10 -p 5202`     |
-| `-u`       | UDP mode (instead of TCP)                    | Test latency/jitter without congestion control (rare for L4S)                         | `iperf3 -c 192.168.1.10 -u -b 1G`    |
-| `-b`       | Bandwidth limit (e.g., 100M for 100 Mbps)    | Simulate constrained networks (useful for L4S vs. Cubic comparisons)                   | `iperf3 -c 192.168.1.10 -b 100M`  |
-| `-R`       | Reverse mode (server sends data to client)   | Test asymmetric paths (e.g., NAT/firewall issues)                                     | `iperf3 -c 192.168.1.10 -R`       |
-| `-J`       | JSON output (machine-readable)               | Integrate results into monitoring tools                                               | `iperf3 -c 192.168.1.10 -J`       |
-| `--logfile`| Save output to a file                        | Record test results for analysis                                                      | `iperf3 -c 192.168.1.10 --logfile l4s_test.txt` |
+| `-Z`       | Zerocopy      | NA                        | `iperf3 -c <server-ip> -Z`           |
+| `-t`       | Test duration (seconds)                      | Define how long to run the test (e.g., for stability checks)                          | `iperf3 -c <server-ip> -t 60`     |
+| `-i`       | Interval (seconds) between periodic reports  | Monitor throughput/latency trends over time                                           | `iperf3 -c <server-ip> -i 5`      |
+| `-V`       | Verbose output                               | Show detailed connection info (e.g., ECN negotiation)                                 | `iperf3 -c <server-ip> -V`        |
+| `-p`       | Server port (default: 5201)                  | Change port if default is blocked or for multi-server tests                           | `iperf3 -c <server-ip> -p 5202`     |
+| `-u`       | UDP mode (instead of TCP)                    | Test latency/jitter without congestion control (rare for L4S)                         | `iperf3 -c <server-ip> -u -b 1G`    |
+| `-b`       | Bandwidth limit (e.g., 100M for 100 Mbps)    | Simulate constrained networks (useful for L4S vs. Cubic comparisons)                   | `iperf3 -c <server-ip> -b 100M`  |
+| `-R`       | Reverse mode (server sends data to client)   | Test asymmetric paths (e.g., NAT/firewall issues)                                     | `iperf3 -c <server-ip> -R`       |
+| `-J`       | JSON output (machine-readable)               | Integrate results into monitoring tools                                               | `iperf3 -c <server-ip> -J`       |
+| `--logfile`| Save output to a file                        | Record test results for analysis                                                      | `iperf3 -c <server-ip> --logfile l4s_test.txt` |
 
 
 ![img1.1](./testImages/L4STestImg/img1.1.png)
@@ -217,11 +217,11 @@ Again you need to check your localhost from ifconfig -a.
 - **On the Client Machine**:
 eg:
   ```bash
-  iperf3 -c 172.21.4.251 -p 5201
+  iperf3 -c <server-ip> -p 5201
   ```
 - **For Reverse Mode Testing** (Useful for NAT/firewall issues):
   ```bash
-  iperf3 -c 172.21.4.251 -p 5201 -R
+  iperf3 -c <server-ip> -p 5201 -R
   ```
 
 ![img7.1](./testImages/L4STestImg/img7.1.png)
@@ -273,6 +273,13 @@ iperf3 -c <server-ip> -t 30 -i 1
 ![img8.2](./testImages/L4STestImg/img8.2.png)
 
 ![img8.8](./testImages/L4STestImg/img8.8.png)
+
+
+
+
+**Expected Difference:**
+- L4S should show lower latency under congestion
+- Similar throughput but fewer retransmits
 
 
 ### **8.4 TCP Prague Performance under Constrained Bandwidth**
@@ -502,7 +509,7 @@ iperf3 -s
 
 **On Client Machine (192.168.1.20):**
 ```bash
-iperf3 -c 192.168.1.10 -t 60 -i 5
+iperf3 -c [server_ip] -t 60 -i 5
 ```
 
 ### **Expected Output Examples**
@@ -520,7 +527,7 @@ Connecting to host 192.168.1.10, port 5201
 **2. With L4S Latency Measurements:**
 
 ```bash
-iperf3 -c 192.168.1.10 -t 30
+iperf3 -c [server_ip] -t 30
 ```
 Expected:
 ```
@@ -574,27 +581,7 @@ qdisc dualpi2 ...
 
 ---
 
-## **Performance Comparison Tests**
 
-### **L4S vs Traditional TCP Test**
-1. On Server:
-```bash
-iperf3 -s
-```
-
-2. On Client (Traditional TCP):
-```bash
-iperf3 -c 192.168.1.10 -C cubic
-```
-
-3. On Client (L4S):
-```bash
-iperf3 -c 192.168.1.10
-```
-
-**Expected Difference:**
-- L4S should show lower latency under congestion
-- Similar throughput but fewer retransmits
 
 ![alt text](./testImages/L4STestImg/image.png)
 

@@ -70,6 +70,12 @@ PORT=1104
 AET="TEST_CLIENT"
 AEC="PACS_SERVER"
 
+# Verify basic connectivity first
+if ! nc -z -w 3 $SERVER $PORT; then
+    echo "ERROR: Cannot connect to $SERVER:$PORT"
+    exit 1
+fi
+
 for size_dir in small medium large; do
   [ -d ~/dicom_test/$size_dir ] || continue
   

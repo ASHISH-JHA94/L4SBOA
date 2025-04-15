@@ -1,0 +1,3 @@
+State      Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess
+FIN-WAIT-1 0      2        172.21.4.69:42218 172.21.4.251:1104
+	 prague wscale:7,7 rto:284 rtt:50.791/25.395 mss:1448 pmtu:1500 rcvmss:536 advmss:1448 cwnd:10 bytes_sent:1 bytes_acked:1 segs_out:4 segs_in:1 data_segs_out:1 send 2280719bps lastsnd:44 lastrcv:44 lastack:44 pacing_rate 4725200bps delivered:1 busy:44ms unacked:2 rcv_space:14480 rcv_ssthresh:64088 minrtt:50.791

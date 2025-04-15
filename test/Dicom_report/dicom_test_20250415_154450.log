@@ -1,0 +1,72 @@
+=== L4S DICOM Transfer Test ===
+Test Date: 20250415_154450
+=== System Verification ===
+L4S Qdisc Status:
+qdisc netem 8002: root refcnt 2 limit 1000 delay 50ms loss 2%
+TCP Congestion Control:
+net.ipv4.tcp_congestion_control = prague
+=== DICOM Verification ===
+DICOM files found: 137
+=== Connection Test ===
+Connection OK
+=== Starting Transfer Test ===
+I: checking input files ...
+I: Requesting Association
+I: Association Accepted (Max Send PDV: 16372)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-064.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 1, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-016.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 2, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-086.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 3, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-049.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 4, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-076.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 5, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-041.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 6, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-074.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 7, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-134.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 8, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-095.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 9, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Sending file: /home/adminisatator/l4s/dicom_test/1-026.dcm
+I: Converting transfer syntax: Little Endian Explicit -> Little Endian Explicit
+I: Sending Store Request (MsgID 10, MR)
+XMIT: .................................
+I: Received Store Response (Success)
+I: Releasing Association
+xargs: storescu: terminated by signal 11
+=== Test Complete ===
+Transfer Time: 22.27 seconds
+Throughput: 30.00 MB/s
+Retransmissions: 
+ECN Marks: 

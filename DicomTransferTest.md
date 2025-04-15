@@ -97,15 +97,15 @@ done
 ---
 
 ### **4. Test Scenarios**  
-#### **4.1 Baseline Performance**  
+#### **4.1 Baseline Performance** 
+for test_script.sh
+[test_script.sh](./test/Dicom_test_script/test_script.sh). 
+
 ```bash
 # Clean network condition test
 
 # Make executable
 chmod +x enhanced_test_script.sh
-
-for test_script.sh
-[test_script.sh](./test/Dicom_test_script/test_script.sh).
 
 ./test_script.sh > baseline_results.log
 ```

@@ -32,7 +32,7 @@ find ~/dicom_test -type f -name "*.dcm" -exec dcmdump {} + | head
 
 ---
 
-![img2.png](./testImages/DICOMTestImg/img2.png)
+![img2.png](./test/DICOMTestImg/img2.png)
 
 ### **3. Transfer Testing Methodology**  
 #### **3.1 Server Configuration**  
@@ -50,7 +50,7 @@ ps aux | grep [s]torescp
 netstat -tulnp | grep 1104
 ```
 
-![img1.png](./testImages/DICOMTestImg/img1.png)
+![img1.png](./test/DICOMTestImg/img1.png)
 
 #### **3.2 Client Test Script**  
 
@@ -91,29 +91,43 @@ done
 ```
 
 ### If you want to refere how I created my Script file below is refernce
-[l4s_transfer.sh](./testImages/DICOMTestImg/l4s_transfer.sh).
+[l4s_transfer.sh](./test/Dicom_test_script/l4s_transfer.sh).
 
-![img3.png](./testImages/DICOMTestImg/img3.png)
+![img3.png](./test/DICOMTestImg/img3.png)
 ---
 
 ### **4. Test Scenarios**  
-#### **4.1 Baseline Performance**  
+#### **4.1 Baseline Performance** 
+for test_script.sh
+[test_script.sh](./test/Dicom_test_script/test_script.sh). 
+
 ```bash
 # Clean network condition test
+
+# Make executable
+chmod +x enhanced_test_script.sh
+
 ./test_script.sh > baseline_results.log
 ```
 
 #### **4.2 Congestion Testing**  
 ```bash
 # Add impairment (run in separate terminal)
-sudo tc qdisc add dev eno1 parent dualpi2: handle 1: netem delay 50ms loss 2%
+
+# Remove existing qdisc
+sudo tc qdisc del dev eno1 root
+
+# Now add netem
+sudo tc qdisc add dev eno1 root netem delay 50ms loss 2%
 
 # Run tests
 ./test_script.sh > congested_results.log
 
-# Remove impairment
-sudo tc qdisc del dev eno1 root
 ```
+
+The detailed report of these test you can find at [DICOM_TRANSFER_REPORT](./test/Dicom_report).
+
+![img4.png](./test/DICOMTestImg/img4.png)
 
 ---
 
